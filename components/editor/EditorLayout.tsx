@@ -6,7 +6,7 @@ interface EditorLayoutProps {
 
 export default function EditorLayout({ children }: EditorLayoutProps) {
   return (
-    <div className="h-screen flex flex-col bg-editor-workspace overflow-hidden">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-100">
       {children}
     </div>
   );

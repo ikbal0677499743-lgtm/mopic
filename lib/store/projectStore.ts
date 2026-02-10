@@ -71,6 +71,7 @@ interface ProjectState {
   isOnCoverSpread: () => boolean;
   getActiveWorkspace: () => Workspace | null;
   getTotalSpreads: () => number;
+  getTotalPages: () => number;
   getSpreadLabel: (index: number) => string;
   getSpreadInfo: (index: number) => SpreadInfo | null;
 }
@@ -208,22 +209,142 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   selectComponent: (id) => set({ selectedComponentId: id }),
 
   addPages: (count) => {
-    // Add pages in multiples of 4 (2 spreads)
-    // TODO: Implement
+    const { pages, pageConfig } = get();
+    const currentTotalPages = (pages.length - 1) * 2 + 2; // (inner spreads × 2) + 2 for cover
+    const newTotalPages = currentTotalPages + count;
+    
+    // Validate against max pages
+    if (newTotalPages > pageConfig.pagesMax) {
+      console.warn(`Cannot add pages: would exceed max of ${pageConfig.pagesMax}`);
+      return;
+    }
+    
+    // Add spreads (count / 2)
+    const spreadsToAdd = count / 2;
+    const newPages = [...pages];
+    
+    for (let i = 0; i < spreadsToAdd; i++) {
+      const spreadIndex = pages.length + i;
+      const leftPageNumber = (spreadIndex - 1) * 2 + 1;
+      
+      newPages.push({
+        id: `page-spread-${spreadIndex}`,
+        projectId: 'temp',
+        pageType: 'inner',
+        pageNumber: leftPageNumber,
+        spreadIndex,
+        designData: {
+          version: 104,
+          slides: [{
+            id: `spread-${spreadIndex}-slide`,
+            background: {
+              primary: { type: 'color', value: '#ffffff' },
+              secondary: { type: 'color', value: '#ffffff' },
+            },
+            components: [],
+          }],
+        },
+        position: spreadIndex,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    
+    set({ pages: newPages });
+    get().recalculatePrice();
   },
 
   removePages: (count) => {
-    // Remove pages in multiples of 4 (2 spreads)
-    // TODO: Implement
+    const { pages, pageConfig } = get();
+    const currentTotalPages = (pages.length - 1) * 2 + 2;
+    const newTotalPages = currentTotalPages - count;
+    
+    // Validate against min pages
+    if (newTotalPages < pageConfig.pagesMin) {
+      console.warn(`Cannot remove pages: would be below min of ${pageConfig.pagesMin}`);
+      return;
+    }
+    
+    // Remove spreads (count / 2) from the end
+    const spreadsToRemove = count / 2;
+    const newPages = pages.slice(0, pages.length - spreadsToRemove);
+    
+    // Adjust currentSpreadIndex if it's beyond new length
+    const { currentSpreadIndex } = get();
+    const newSpreadIndex = Math.min(currentSpreadIndex, newPages.length - 1);
+    
+    set({ pages: newPages, currentSpreadIndex: newSpreadIndex });
+    get().recalculatePrice();
   },
 
   duplicateSpread: (index) => {
-    // TODO: Implement
+    const { pages } = get();
+    
+    // Can only duplicate inner spreads (not cover)
+    if (index === 0) {
+      console.warn('Cannot duplicate cover spread');
+      return;
+    }
+    
+    const spreadToDuplicate = pages[index];
+    if (!spreadToDuplicate) return;
+    
+    // Create a new spread with the same design data
+    const newSpreadIndex = pages.length;
+    const leftPageNumber = (newSpreadIndex - 1) * 2 + 1;
+    
+    const newSpread: ProjectPage = {
+      ...spreadToDuplicate,
+      id: `page-spread-${newSpreadIndex}`,
+      pageNumber: leftPageNumber,
+      spreadIndex: newSpreadIndex,
+      position: newSpreadIndex,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      // Deep clone the design data
+      designData: JSON.parse(JSON.stringify(spreadToDuplicate.designData)),
+    };
+    
+    set({ pages: [...pages, newSpread] });
+    get().recalculatePrice();
   },
 
   deleteSpread: (index) => {
-    // Can only delete inner spreads, not cover
-    // TODO: Implement
+    const { pages, pageConfig } = get();
+    
+    // Can only delete inner spreads (not cover)
+    if (index === 0) {
+      console.warn('Cannot delete cover spread');
+      return;
+    }
+    
+    // Check min pages
+    const currentTotalPages = (pages.length - 1) * 2 + 2;
+    if (currentTotalPages <= pageConfig.pagesMin) {
+      console.warn(`Cannot delete spread: would be below min of ${pageConfig.pagesMin} pages`);
+      return;
+    }
+    
+    // Remove the spread
+    const newPages = pages.filter((_, i) => i !== index);
+    
+    // Re-index remaining spreads
+    newPages.forEach((page, i) => {
+      page.spreadIndex = i;
+      page.position = i;
+      if (i > 0) {
+        page.pageNumber = (i - 1) * 2 + 1;
+      }
+    });
+    
+    // Adjust currentSpreadIndex if needed
+    const { currentSpreadIndex } = get();
+    const newSpreadIndex = currentSpreadIndex >= newPages.length 
+      ? newPages.length - 1 
+      : currentSpreadIndex;
+    
+    set({ pages: newPages, currentSpreadIndex: newSpreadIndex });
+    get().recalculatePrice();
   },
 
   updateComponent: (spreadIndex, componentId, updates) => {
@@ -263,6 +384,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   getTotalSpreads: () => {
     return get().pages.length;
+  },
+
+  getTotalPages: () => {
+    const { pages } = get();
+    // Total pages = (inner spreads × 2) + 2 for cover
+    return (pages.length - 1) * 2 + 2;
   },
 
   getSpreadLabel: (index) => {

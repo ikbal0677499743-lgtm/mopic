@@ -52,7 +52,9 @@ function EditorContent() {
       <EditorHeader />
       <div className="flex-1 flex overflow-hidden">
         <EditorSidebar />
-        <EditorCanvas />
+        <div className="flex-1 relative">
+          <EditorCanvas />
+        </div>
       </div>
       <EditorBottomBar />
     </EditorLayout>

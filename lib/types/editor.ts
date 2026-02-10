@@ -34,7 +34,7 @@ export interface HistoryEntry {
 // UI STATE
 // ============================================================================
 
-export type SidebarTab = 'photos' | 'templates' | 'layouts' | 'backgrounds' | 'cliparts';
+export type SidebarTab = 'images' | 'templates' | 'layouts' | 'backgrounds' | 'cliparts';
 export type ViewMode = 'spread' | 'allPages';
 
 export interface UIState {

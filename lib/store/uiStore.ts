@@ -9,7 +9,7 @@ interface UIState {
   isSidebarOpen: boolean;
 
   // Zoom (50-200%)
-  zoomLevel: number;
+  zoom: number;
 
   // View mode
   viewMode: ViewMode;
@@ -18,20 +18,23 @@ interface UIState {
   showGrid: boolean;
   showGuides: boolean;
   showBleed: boolean;
+  showThumbnails: boolean;
 
   // Context toolbar
   contextToolbarPosition: { x: number; y: number } | null;
 
   // Actions
+  setActiveSidebarTab: (tab: SidebarTab | null) => void;
   toggleSidebar: (tab: SidebarTab) => void;
   closeSidebar: () => void;
-  setZoomLevel: (level: number) => void;
+  setZoom: (level: number) => void;
   zoomIn: () => void;
   zoomOut: () => void;
   setViewMode: (mode: ViewMode) => void;
   toggleGrid: () => void;
   toggleGuides: () => void;
   toggleBleed: () => void;
+  toggleThumbnails: () => void;
   setContextToolbarPosition: (position: { x: number; y: number } | null) => void;
 }
 
@@ -39,14 +42,26 @@ export const useUIStore = create<UIState>((set, get) => ({
   // Initial state
   activeSidebarTab: null,
   isSidebarOpen: false,
-  zoomLevel: 100,
+  zoom: 100,
   viewMode: 'spread',
   showGrid: false,
   showGuides: true,
   showBleed: false,
+  showThumbnails: true,
   contextToolbarPosition: null,
 
   // Actions
+  setActiveSidebarTab: (tab) => {
+    const { activeSidebarTab } = get();
+    if (activeSidebarTab === tab) {
+      // Close if same tab clicked
+      set({ isSidebarOpen: false, activeSidebarTab: null });
+    } else {
+      // Open with new tab
+      set({ isSidebarOpen: true, activeSidebarTab: tab });
+    }
+  },
+
   toggleSidebar: (tab) => {
     const { activeSidebarTab, isSidebarOpen } = get();
     if (activeSidebarTab === tab && isSidebarOpen) {
@@ -60,21 +75,21 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   closeSidebar: () => set({ isSidebarOpen: false, activeSidebarTab: null }),
 
-  setZoomLevel: (level) => {
+  setZoom: (level) => {
     const clampedLevel = Math.max(50, Math.min(200, level));
-    set({ zoomLevel: clampedLevel });
+    set({ zoom: clampedLevel });
   },
 
   zoomIn: () => {
-    const { zoomLevel } = get();
-    const newLevel = Math.min(200, zoomLevel + 10);
-    set({ zoomLevel: newLevel });
+    const { zoom } = get();
+    const newLevel = Math.min(200, zoom + 10);
+    set({ zoom: newLevel });
   },
 
   zoomOut: () => {
-    const { zoomLevel } = get();
-    const newLevel = Math.max(50, zoomLevel - 10);
-    set({ zoomLevel: newLevel });
+    const { zoom } = get();
+    const newLevel = Math.max(50, zoom - 10);
+    set({ zoom: newLevel });
   },
 
   setViewMode: (mode) => set({ viewMode: mode }),
@@ -82,6 +97,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
   toggleGuides: () => set((state) => ({ showGuides: !state.showGuides })),
   toggleBleed: () => set((state) => ({ showBleed: !state.showBleed })),
+  toggleThumbnails: () => set((state) => ({ showThumbnails: !state.showThumbnails })),
 
   setContextToolbarPosition: (position) => set({ contextToolbarPosition: position }),
 }));
