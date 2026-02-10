@@ -562,7 +562,7 @@ INSERT INTO prices (store_id, size_value_key, base_price_net, base_price_gross, 
 SELECT s.id, 'HC_Square', 35.00, 35.00, 'USD' FROM stores s WHERE s.slug = 'default';
 
 INSERT INTO prices (store_id, size_value_key, base_price_net, base_price_gross, currency)
-SELECT s.id, 'SC_Horizontal', 18.00, 18.00, 'USD' FROM stores s WHERE s.slug = 'default';
+SELECT s.id, 'SC_Horizontal', 20.00, 20.00, 'USD' FROM stores s WHERE s.slug = 'default';
 
 INSERT INTO prices (store_id, size_value_key, base_price_net, base_price_gross, currency)
 SELECT s.id, 'SC_Vertical', 20.00, 20.00, 'USD' FROM stores s WHERE s.slug = 'default';

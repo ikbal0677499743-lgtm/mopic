@@ -269,7 +269,7 @@ export const BASE_PRICES: Record<string, number> = {
   HC_Horizontal: 30.00,
   HC_Vertical: 32.00,
   HC_Square: 35.00,
-  SC_Horizontal: 18.00,
+  SC_Horizontal: 20.00,
   SC_Vertical: 20.00,
   SC_Square: 22.00,
 };
